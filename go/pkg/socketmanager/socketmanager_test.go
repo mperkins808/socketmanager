@@ -1,6 +1,7 @@
 package socketmanager_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/mperkins808/socketmanager/go/pkg/socketmanager"
@@ -92,5 +93,30 @@ func TestGetActiveSockets(t *testing.T) {
 
 	if sockets["foo"].SocketID != "bar" {
 		t.Errorf("socket foo. socket id want bar. Was %s", sockets["foo"].SocketID)
+	}
+}
+
+func TestSocketContext(t *testing.T) {
+	sm := socketmanager.NewSimpleSocketManager()
+	ctx := sm.WithContext(context.Background())
+	sm.Add("foo", "bar")
+	smC, err := socketmanager.GetSocketManagerFromContext(ctx)
+	if err != nil {
+		t.Errorf("%v", err)
+	}
+
+	s, ok := smC.GetSocket("foo")
+	if !ok {
+		t.Error("getting socket manager from context. socket foo was not found")
+	}
+
+	if s.SocketID != "bar" {
+		t.Errorf("socket id. want bar. was %v", s.SocketID)
+	}
+
+	ctx = context.Background()
+	_, err = socketmanager.GetSocketManagerFromContext(ctx)
+	if err == nil || err.Error() != "socket manager is not in context" {
+		t.Errorf("error was %v. want socket manager is not in context", err.Error())
 	}
 }

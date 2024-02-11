@@ -1,7 +1,15 @@
 package socketmanager
 
 import (
+	"context"
+	"fmt"
 	"sync"
+)
+
+type SocketManagerID string
+
+const (
+	SOCKETMANAGER SocketManagerID = "socketmanager"
 )
 
 type SocketManager interface {
@@ -26,6 +34,21 @@ func NewSimpleSocketManager() *SimpleSocketManager {
 	return &SimpleSocketManager{
 		activeSockets: make(map[string]SocketConnection),
 	}
+}
+
+// Add the socket manager to context
+func (sm *SimpleSocketManager) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, SOCKETMANAGER, sm)
+}
+
+// Get socket manager from context
+func GetSocketManagerFromContext(ctx context.Context) (*SimpleSocketManager, error) {
+	sm := ctx.Value(SOCKETMANAGER)
+	switch t := sm.(type) {
+	case *SimpleSocketManager:
+		return t, nil
+	}
+	return nil, fmt.Errorf("socket manager is not in context")
 }
 
 // returns based on if the socket id is found in socket manager
