@@ -17,11 +17,20 @@ type SocketManager interface {
 	UpdateDue(id string) bool
 	SetUpdateDue(id string, due bool)
 	Remove(id string)
+	GetArbs(id string) map[string]interface{}
+	GetArb(id string, key string) interface{}
+	SetArb(id string, key string, arb interface{}) error
 }
 
 type SocketConnection struct {
 	SocketID  string
 	UpdateDue bool
+	Arbs      map[string]interface{}
+}
+
+type ArbResult struct {
+	Value interface{}
+	Err   error
 }
 
 type SimpleSocketManager struct {
@@ -133,4 +142,52 @@ func (sm *SimpleSocketManager) UpdateDue(id string) bool {
 		return false
 	}
 	return s.UpdateDue
+}
+
+// returns the map of interfaces attached to a socket
+func (sm *SimpleSocketManager) GetArbs(id string) (map[string]interface{}, error) {
+
+	s, active := sm.GetSocket(id)
+	if !active {
+		return nil, fmt.Errorf("socket %v is not active", id)
+	}
+	return s.Arbs, nil
+}
+
+// returns an interface attached to a socket
+func (sm *SimpleSocketManager) GetArb(id string, key string) ArbResult {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+
+	socket, ok := sm.activeSockets[id]
+	if !ok {
+		return ArbResult{Err: fmt.Errorf("socket %v is not active", id)}
+	}
+
+	arb, ok := socket.Arbs[key]
+	if !ok {
+		return ArbResult{Err: fmt.Errorf("%v not found for socket %v", key, id)}
+	}
+
+	return ArbResult{Value: arb}
+}
+
+// sets arbitrary data for a socket
+func (sm *SimpleSocketManager) SetArb(id string, key string, arb interface{}) error {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+
+	socket, ok := sm.activeSockets[id]
+	if !ok {
+		return fmt.Errorf("socket %v is not active", id)
+	}
+
+	// If nil then instantiate it
+	if socket.Arbs == nil {
+		socket.Arbs = make(map[string]interface{})
+	}
+
+	socket.Arbs[key] = arb
+	sm.activeSockets[id] = socket
+	return nil
 }

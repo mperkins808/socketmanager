@@ -1,6 +1,6 @@
 # socketmanager
 
-Manage your socket connections across functions through context.
+Manage your socket connections across functions through context. Parse values across functions
 
 ## Seting up the socket manager
 
@@ -110,4 +110,34 @@ func main() {
 	}(ctx)
 
 }
+```
+
+## Set and Get arbitrary values
+
+You can attach any data you like to a socketmanager id.
+
+```go
+
+sm := socketmanager.NewSimpleSocketManager()
+id := "foo"
+sm.Add(id, "bar")
+
+key := "processing_data"
+processing := true
+
+err := sm.SetArb(id, key, data)
+if err != nil {
+	fmt.Println(err)
+	return
+}
+
+// access later
+
+processing, err = sm.GetArb(id, key).Bool()
+if err != nil {
+	// will error if the value is not a bool or the socket id is no longer active
+	fmt.Println(err)
+	return
+}
+
 ```
