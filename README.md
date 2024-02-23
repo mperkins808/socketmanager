@@ -114,6 +114,8 @@ func main() {
 
 ## Set and Get arbitrary values
 
+You can attach any data you like to a socketmanager id.
+
 ```go
 
 sm := socketmanager.NewSimpleSocketManager()
@@ -133,6 +135,7 @@ if err != nil {
 
 processing, err = sm.GetArb(id, key).Bool()
 if err != nil {
+	// will error if the value is not a bool or the socket id is no longer active
 	fmt.Println(err)
 	return
 }
