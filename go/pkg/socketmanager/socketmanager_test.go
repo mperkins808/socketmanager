@@ -120,3 +120,77 @@ func TestSocketContext(t *testing.T) {
 		t.Errorf("error was %v. want socket manager is not in context", err.Error())
 	}
 }
+
+func TestSocketArbs(t *testing.T) {
+	sm := socketmanager.NewSimpleSocketManager()
+	id := "foo"
+	sm.Add(id, "bar")
+
+	key := "fizz"
+	data := "string string"
+
+	err := sm.SetArb(id, key, data)
+	if err != nil {
+		t.Fatalf("error was %v", err)
+	}
+
+	arb, err := sm.GetArb(id, key).String()
+	if err != nil {
+		t.Fatalf("error was %v", err)
+	}
+
+	if arb != data {
+		t.Errorf("arbitrary data was not the same as when it was set. input %v. output %v", data, arb)
+
+	}
+
+	_, err = sm.GetArb(id, "somebad key").String()
+	if err == nil {
+		t.Errorf("getting an arb for a invalid key did not error")
+	}
+
+	_, err = sm.GetArbs("matty p")
+	if err == nil {
+		t.Errorf("getting an arb for a invalid id did not error")
+	}
+
+}
+
+func TestMultipleSocketsArbs(t *testing.T) {
+	sm := socketmanager.NewSimpleSocketManager()
+	id := "foo"
+	id2 := "bud"
+	sm.Add(id, "bar")
+	sm.Add(id2, "biz")
+
+	key := "fizz"
+	data := "string string"
+	data2 := "lalalalala"
+	err := sm.SetArb(id, key, data)
+	if err != nil {
+		t.Fatalf("error was %v", err)
+	}
+
+	err = sm.SetArb(id2, key, data2)
+	if err != nil {
+		t.Fatalf("error was %v", err)
+	}
+
+	arb, err := sm.GetArb(id, key).String()
+	arb2, err2 := sm.GetArb(id2, key).String()
+
+	if err != nil {
+		t.Fatalf("error was %v", err)
+	}
+
+	if err2 != nil {
+		t.Fatalf("error was %v", err2)
+	}
+
+	if arb != data {
+		t.Errorf("arbitrary data was not the same as when it was set. input %v. output %v", data, arb)
+	}
+	if arb2 != data2 {
+		t.Errorf("arbitrary data was not the same as when it was set. input %v. output %v", data, arb2)
+	}
+}
